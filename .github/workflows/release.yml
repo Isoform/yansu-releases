@@ -1,12 +1,8 @@
 name: Release Yansu Agent
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g., v1.0.0)'
-        required: true
-        type: string
+  repository_dispatch:
+    types: [release]
 
 env:
   BINARY_NAME: yansu
@@ -57,7 +53,7 @@ jobs:
           GOARCH: ${{ matrix.arch }}
           CGO_ENABLED: 0
         run: |
-          VERSION=${{ inputs.version }}
+          VERSION=${{ github.event.client_payload.version }}
           go build -ldflags="-s -w -X main.version=${VERSION}" -o ${{ env.BINARY_NAME }}-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }} ./cmd/yansu/
 
       - name: Upload artifact
@@ -84,7 +80,7 @@ jobs:
       - name: Prepare release assets
         run: |
           mkdir -p release
-          VERSION=${{ inputs.version }}
+          VERSION=${{ github.event.client_payload.version }}
 
           # Move and rename artifacts
           for dir in artifacts/*/; do
@@ -106,10 +102,10 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.version }}
-          name: Yansu Agent ${{ inputs.version }}
+          tag_name: ${{ github.event.client_payload.version }}
+          name: Yansu Agent ${{ github.event.client_payload.version }}
           body: |
-            ## Yansu Agent ${{ inputs.version }}
+            ## Yansu Agent ${{ github.event.client_payload.version }}
 
             ### Quick Install
 
@@ -121,28 +117,28 @@ jobs:
 
             **macOS (Apple Silicon)**
             ```bash
-            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ inputs.version }}/yansu-darwin-arm64 -o yansu
+            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ github.event.client_payload.version }}/yansu-darwin-arm64 -o yansu
             chmod +x yansu
             sudo mv yansu /usr/local/bin/
             ```
 
             **macOS (Intel)**
             ```bash
-            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ inputs.version }}/yansu-darwin-amd64 -o yansu
+            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ github.event.client_payload.version }}/yansu-darwin-amd64 -o yansu
             chmod +x yansu
             sudo mv yansu /usr/local/bin/
             ```
 
             **Linux (x86_64)**
             ```bash
-            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ inputs.version }}/yansu-linux-amd64 -o yansu
+            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ github.event.client_payload.version }}/yansu-linux-amd64 -o yansu
             chmod +x yansu
             sudo mv yansu /usr/local/bin/
             ```
 
             **Linux (ARM64)**
             ```bash
-            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ inputs.version }}/yansu-linux-arm64 -o yansu
+            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ github.event.client_payload.version }}/yansu-linux-arm64 -o yansu
             chmod +x yansu
             sudo mv yansu /usr/local/bin/
             ```
