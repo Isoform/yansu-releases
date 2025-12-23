@@ -1,0 +1,156 @@
+name: Release Yansu Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  BINARY_NAME: yansu
+  SOURCE_REPO: Isoform/something
+  SOURCE_PATH: yansu-agent
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}-${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: darwin
+            arch: amd64
+            ext: ''
+          - os: darwin
+            arch: arm64
+            ext: ''
+          - os: linux
+            arch: amd64
+            ext: ''
+          - os: linux
+            arch: arm64
+            ext: ''
+          - os: windows
+            arch: amd64
+            ext: '.exe'
+
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SOURCE_REPO }}
+          token: ${{ secrets.SOURCE_REPO_TOKEN }}
+          path: source
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: source/${{ env.SOURCE_PATH }}/go.sum
+
+      - name: Build
+        working-directory: source/${{ env.SOURCE_PATH }}
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          VERSION=${{ inputs.version }}
+          go build -ldflags="-s -w -X main.version=${VERSION}" -o ${{ env.BINARY_NAME }}-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }} ./cmd/yansu/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BINARY_NAME }}-${{ matrix.os }}-${{ matrix.arch }}
+          path: source/${{ env.SOURCE_PATH }}/${{ env.BINARY_NAME }}-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          VERSION=${{ inputs.version }}
+
+          # Move and rename artifacts
+          for dir in artifacts/*/; do
+            for file in "$dir"*; do
+              if [ -f "$file" ]; then
+                filename=$(basename "$file")
+                cp "$file" "release/$filename"
+                chmod +x "release/$filename" 2>/dev/null || true
+              fi
+            done
+          done
+
+          # Create checksums
+          cd release
+          sha256sum * > checksums.txt
+
+          ls -la
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: Yansu Agent ${{ inputs.version }}
+          body: |
+            ## Yansu Agent ${{ inputs.version }}
+
+            ### Quick Install
+
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/Isoform/yansu-releases/main/install.sh | bash
+            ```
+
+            ### Manual Installation
+
+            **macOS (Apple Silicon)**
+            ```bash
+            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ inputs.version }}/yansu-darwin-arm64 -o yansu
+            chmod +x yansu
+            sudo mv yansu /usr/local/bin/
+            ```
+
+            **macOS (Intel)**
+            ```bash
+            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ inputs.version }}/yansu-darwin-amd64 -o yansu
+            chmod +x yansu
+            sudo mv yansu /usr/local/bin/
+            ```
+
+            **Linux (x86_64)**
+            ```bash
+            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ inputs.version }}/yansu-linux-amd64 -o yansu
+            chmod +x yansu
+            sudo mv yansu /usr/local/bin/
+            ```
+
+            **Linux (ARM64)**
+            ```bash
+            curl -L https://github.com/Isoform/yansu-releases/releases/download/${{ inputs.version }}/yansu-linux-arm64 -o yansu
+            chmod +x yansu
+            sudo mv yansu /usr/local/bin/
+            ```
+
+            ### Verify Installation
+            ```bash
+            yansu --version
+            ```
+          files: release/*
+          draft: false
+          prerelease: false
