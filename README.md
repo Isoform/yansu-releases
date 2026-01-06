@@ -56,4 +56,4 @@ yansu clone <org/product/project>
 
 ## Documentation
 
-Visit [dashboard.yansu.ai](https://dashboard.yansu.ai) for full documentation.
+See [docs/README.md](docs/README.md) for full documentation.
