@@ -5,6 +5,7 @@ Yansu Agent is a local development companion that syncs your project's knowledge
 ## Table of Contents
 
 - [Installation](#installation)
+  - [Configuration](#configuration)
 - [Getting Started](#getting-started)
 - [Commands](#commands)
 - [Background Daemon](#background-daemon)
@@ -60,6 +61,16 @@ sudo mv yansu /usr/local/bin/
 ```bash
 yansu --version
 ```
+
+### Configuration
+
+Set the `YANSU_URL` environment variable to use a custom Yansu server:
+
+```bash
+export YANSU_URL=https://your-yansu-server.com
+```
+
+Add this to your shell profile (`~/.bashrc`, `~/.zshrc`, etc.) to persist the setting.
 
 ## Getting Started
 
