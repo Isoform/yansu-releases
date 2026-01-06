@@ -95,7 +95,7 @@ This will:
 
 ### 3. Start Coding
 
-Open the project in your favorite AI coding assistant:
+Open the project in your favorite AI Coding Agent:
 
 ```bash
 cd user-auth-feature
@@ -103,6 +103,32 @@ claude  # or cursor, windsurf, etc.
 ```
 
 The AI agent will automatically read the knowledge base from `.something/` directory.
+
+### 4. Commit and Push Your Changes
+
+After completing your coding tasks with the AI Coding Agent, **remember to commit and push your changes**:
+
+```bash
+# Stage and commit your changes
+git add .
+git commit -m "feat: implement user authentication"
+
+# Push code and knowledge to Yansu
+yansu push
+```
+
+The `yansu push` command will:
+1. Push your git commits to the remote repository
+2. Push any generated knowledge to the Yansu cloud
+
+> **Important**: The git commit triggers the post-commit hook which automatically extracts knowledge from your changes. Always commit before pushing to ensure knowledge is captured.
+
+You can also push code and knowledge separately:
+
+```bash
+yansu push --code       # Push only git commits
+yansu push --knowledge  # Push only knowledge to Yansu cloud
+```
 
 ## Commands
 
